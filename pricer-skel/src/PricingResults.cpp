@@ -1,6 +1,6 @@
 #include <iostream>
 #include "PricingResults.hpp"
-#include "json_reader.hpp"
+#include "json_helper.hpp"
 
 std::ostream&
 operator<<(std::ostream& stm, const PricingResults& res)
