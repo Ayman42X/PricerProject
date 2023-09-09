@@ -14,6 +14,11 @@ class BlackScholesModel
     PnlVect* spot_;  /// valeurs initiales des sous-jacents
 
     /**
+     * Declaration de Constructeur
+     */
+    BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot);
+    
+    /**
      * Génère une trajectoire du modèle et la stocke dans path
      *
      * @param[out] path contient une trajectoire du modèle.
