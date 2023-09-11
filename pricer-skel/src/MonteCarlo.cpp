@@ -1,8 +1,6 @@
 #include "MonteCarlo.hpp"
 #include "pnl/pnl_vector.h"
 #include "pnl/pnl_matrix.h"
-#include "BlackScholesModel.hpp"
-#include "Option.hpp"
 #include <cmath>
 
 MonteCarlo::MonteCarlo(BlackScholesModel* mod, Option* opt, PnlRng* rng, double fdStep, long nbSamples)
@@ -15,7 +13,7 @@ MonteCarlo::MonteCarlo(BlackScholesModel* mod, Option* opt, PnlRng* rng, double 
 * @param[out] prix valeur de l'estimateur Monte Carlo
 * @param[out] std_dev écart type de l'estimateur
 */
-void price(double& prix, double& std_dev)
+void MonteCarlo::price(double& prix, double& std_dev)
     {
     
     double sum = 0.0;
