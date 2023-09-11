@@ -13,6 +13,12 @@ class MonteCarlo
     double fdStep_;          /*! pas de différence finie */
     long nbSamples_;         /*! nombre de tirages Monte Carlo */
 
+
+    /**
+     * Declaration de Constructeur
+     */
+    MonteCarlo(BlackScholesModel* mod, Option* opt, PnlRng* rng, double fdStep, long nbSamples);
+
     /**
      * Calcule le prix de l'option à la date 0
      *
