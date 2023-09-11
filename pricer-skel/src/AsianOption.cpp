@@ -11,12 +11,9 @@ private:
 
 public:
     AsianOption(double T, int nbTimeSteps, int size, double strike, const PnlVect* weights)
-        : strike_(strike)
+        :Option(T, nbTimeSteps, size), strike_(strike), weights_(pnl_vect_copy(weights))
     {
-        T_ = T;
-        nbTimeSteps_ = nbTimeSteps;
-        size_ = size;
-        weights_= pnl_vect_copy(weights);
+        
     }
 
     double payoff(const PnlMat* path) override
