@@ -41,3 +41,57 @@ void MonteCarlo::price(double& prix, double& std_dev)
     pnl_mat_free(&path);
     };
 
+     
+    /**
+     * Calcule le prix de l'option à la date t
+     *
+     * @param[in]  past contient la trajectoire du sous-jacent
+     * jusqu'à l'instant t
+     * @param[in] t date à laquelle le calcul est fait
+     * @param[out] prix contient le prix
+     * @param[out] std_dev contient l'écart type de l'estimateur
+     */
+   void MonteCarlo::price(const PnlMat* past, double t, double& prix, double& std_dev)
+{
+
+
+     // Initialization de la matrice path
+     PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ + 1, mod_->size_);
+
+    // Initialisation des variables pour stocker les prix simulés
+    double sum = 0.0;
+    double sum_squared = 0.0;
+
+    for (long i = 0; i < nbSamples_; ++i)
+    {
+        // Génération d'une trajectoire du modèle à partir de t
+        mod_->asset(path, t, opt_->T_, opt_->nbTimeSteps_, rng_, past);
+        
+        double payoff = opt_->payoff(path);
+        sum += payoff;
+
+        sum_squared += payoff * payoff;
+    }
+
+    prix = exp(-mod_->r_ * (opt_->T_ - t)) * (sum / nbSamples_);
+    double variance = exp(-2 * mod_->r_ * (opt_->T_ - t)) * (sum_squared / nbSamples_ ) - ((sum / nbSamples_) * (sum / nbSamples_));
+    std_dev =  sqrt(variance / nbSamples_);
+
+    pnl_mat_free(&path);
+}
+
+
+
+
+    /**
+     * Calcule le delta de l'option à la date 0
+     *
+     * @param[out] delta contient le vecteur de delta
+     * @param[out] std_dev contient l'écart type de l'estimateur
+     */
+    void MonteCarlo::delta(PnlVect* delta, PnlVect* std_dev) {
+
+
+
+    };
+
