@@ -10,6 +10,13 @@ class Option
     double T_;        /// maturité
     int nbTimeSteps_; /// nombre de pas de temps de discrétisation
     int size_;        /// dimension du modèle, redondant avec BlackScholesModel::size_
+    
+     Option(double T, int nbTimeSteps, int size)
+        : T_(T), nbTimeSteps_(nbTimeSteps), size_(size)
+    {
+    }
+    
+    
     /**
      * Calcule la valeur du payoff sur la trajectoire
      *
