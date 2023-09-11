@@ -19,7 +19,6 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
 endif ()
 
-
 # Detect PNL
 find_package(Pnl REQUIRED)
 set(LIBS ${LIBS} ${PNL_LIBRARIES})
@@ -52,6 +51,10 @@ pnl_add_postbuild(test_json_reader)
 
 add_executable(mc-example src/mc_example.cpp)
 target_link_libraries(mc-example ${LIBS})
+
+add_executable(TestBlackScholes src/TestBlackScholes.cpp src/BlackScholesModel.cpp)
+target_link_libraries(TestBlackScholes ${LIBS})
+
 
 # Print compiler flags
 get_directory_property(DirDefs COMPILE_DEFINITIONS)
