@@ -22,9 +22,9 @@ public:
         for (int j = 0; j < size_; ++j)
         {
             double weighted_sum = 0.0;
-            for (int i = 0; i <= nbTimeSteps_; ++i)
+            for (int i = 0; i < nbTimeSteps_; ++i)
             {
-                weighted_sum += GET(weights_, i) * MGET(path, i, j);
+                weighted_sum += GET(weights_, j) * MGET(path, i, j);
             }
             LET(average_prices, j) = weighted_sum / (nbTimeSteps_ + 1);
         }
