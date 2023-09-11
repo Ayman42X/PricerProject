@@ -1,5 +1,4 @@
 #include "Option.hpp"
-
 // #pragma once
 
 #include "pnl/pnl_vector.h"
@@ -55,9 +54,7 @@ public:
     }
 };
 
-
 //CLASSE OPTION PERFORMANCE
-
 class PerformanceOption : public Option
 {
     public:
@@ -86,18 +83,15 @@ class PerformanceOption : public Option
                 sum_ti += pnl_mat_get(path, i, d) * pnl_vect_get(weights_, d);
                 sum_ti_minus_1 += pnl_mat_get(path, i-1, d) * pnl_vect_get(weights_, d);
             }
-            //terme de performance a l'intant ti
+            //terme de performance a l'intant ti, c'ets le rendement relatif entre les 2 instants
             double term = (sum_ti / sum_ti_minus_1) - 1.0;
             term = (term > 0.0) ? term : 0.0;
             //maj de la performance 
             performance *= (1.0 + term);   
         }
-        return performance - 1.0;
-       
+        return performance - 1.0;   
     }
 };
-
-
 
 int main() {
     double T = 1.0;
@@ -105,10 +99,8 @@ int main() {
     int size = 3; 
     double strike = 100.0; 
     PnlVect* weights = pnl_vect_create_from_scalar(size, 1.0 / size); 
-
     PnlMat* path = pnl_mat_create_from_double(nbTimeSteps + 1, size, 125.0); // Trajectoire constante à 100
 
-    
     BasketOption basketOption(T, nbTimeSteps, size, strike, weights);
     double basketPayoff = basketOption.payoff(path);
     std::cout << "Payoff de l'option panier : " << basketPayoff << std::endl;
@@ -116,11 +108,7 @@ int main() {
     PerformanceOption performanceOption(T, nbTimeSteps, size, weights);
     double performancePayoff = performanceOption.payoff(path);
     std::cout << "Payoff de l'option performance sur panier : " << performancePayoff << std::endl;
-
     pnl_mat_free(&path);
     pnl_vect_free(&weights);
     return 0;
 }
-
-
-
