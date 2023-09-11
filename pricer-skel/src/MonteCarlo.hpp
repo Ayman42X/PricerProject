@@ -3,6 +3,7 @@
 #include "Option.hpp"
 #include "BlackScholesModel.hpp"
 #include "pnl/pnl_random.h"
+#include <cmath>
 
 class MonteCarlo
 {
@@ -12,6 +13,8 @@ class MonteCarlo
     PnlRng* rng_;            /*! pointeur sur le générateur */
     double fdStep_;          /*! pas de différence finie */
     long nbSamples_;         /*! nombre de tirages Monte Carlo */
+
+    MonteCarlo(BlackScholesModel* mod, Option* Option, PnlRng* rng, double& fdStep, long& nbSamples);
 
     /**
      * Calcule le prix de l'option à la date 0
