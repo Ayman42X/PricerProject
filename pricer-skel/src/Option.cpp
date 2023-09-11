@@ -93,22 +93,22 @@ class PerformanceOption : public Option
     }
 };
 
-int main() {
-    double T = 1.0;
-    int nbTimeSteps = 100; 
-    int size = 3; 
-    double strike = 100.0; 
-    PnlVect* weights = pnl_vect_create_from_scalar(size, 1.0 / size); 
-    PnlMat* path = pnl_mat_create_from_double(nbTimeSteps + 1, size, 125.0); // Trajectoire constante à 100
+// int main() {
+//     double T = 1.0;
+//     int nbTimeSteps = 100; 
+//     int size = 3; 
+//     double strike = 100.0; 
+//     PnlVect* weights = pnl_vect_create_from_scalar(size, 1.0 / size); 
+//     PnlMat* path = pnl_mat_create_from_double(nbTimeSteps + 1, size, 125.0); // Trajectoire constante à 100
 
-    BasketOption basketOption(T, nbTimeSteps, size, strike, weights);
-    double basketPayoff = basketOption.payoff(path);
-    std::cout << "Payoff de l'option panier : " << basketPayoff << std::endl;
+//     BasketOption basketOption(T, nbTimeSteps, size, strike, weights);
+//     double basketPayoff = basketOption.payoff(path);
+//     std::cout << "Payoff de l'option panier : " << basketPayoff << std::endl;
 
-    PerformanceOption performanceOption(T, nbTimeSteps, size, weights);
-    double performancePayoff = performanceOption.payoff(path);
-    std::cout << "Payoff de l'option performance sur panier : " << performancePayoff << std::endl;
-    pnl_mat_free(&path);
-    pnl_vect_free(&weights);
-    return 0;
-}
+//     PerformanceOption performanceOption(T, nbTimeSteps, size, weights);
+//     double performancePayoff = performanceOption.payoff(path);
+//     std::cout << "Payoff de l'option performance sur panier : " << performancePayoff << std::endl;
+//     pnl_mat_free(&path);
+//     pnl_vect_free(&weights);
+//     return 0;
+// }

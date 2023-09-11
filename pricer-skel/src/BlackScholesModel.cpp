@@ -13,7 +13,7 @@ BlackScholesModel::BlackScholesModel(int size, double r, double rho,PnlVect* sig
 void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* rng){
     double timeStep = T/nbTimeSteps;
     int d = this->spot_->size;
-    pnl_mat_set_col(path,this->spot_,0);
+    pnl_mat_set_row(path,this->spot_,0);
     PnlVect* G = pnl_vect_new();
     PnlVect* L = pnl_vect_new();
     PnlMat* matriceCorrelation = pnl_mat_create_from_scalar(d,d,this->rho_);
@@ -29,9 +29,10 @@ void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* r
             pnl_mat_get_row(L,matriceCorrelation,j);
             quantity += sigmaShare*sqrt(timeStep)*pnl_vect_scalar_prod(G,L);
             quantity = exp(quantity);
-            double share = pnl_mat_get(path,j,t-1);
+            double share = pnl_mat_get(path,t-1,j);
             share*=quantity;
-            pnl_mat_set(path,j,t,share);
+            MLET(path,t,j) = share; 
+            //pnl_mat_set(path,j,t,share);
         } 
     }
     pnl_vect_free(&G);
