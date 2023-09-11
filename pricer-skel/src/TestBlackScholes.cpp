@@ -10,5 +10,4 @@ int main() {
     pnl_rng_sseed(rng, time(NULL));
     BlackScholesModel* blackScholesModel = new BlackScholesModel(2,0.04,0.0,sigma,spot);
     blackScholesModel->asset(path,5,10,rng);
-return 0;
 }
