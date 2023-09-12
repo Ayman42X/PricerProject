@@ -27,6 +27,9 @@ int main() {
     BasketOption* OptionTest2 = new BasketOption(5,10,2,100,weights);
     MonteCarlo* monteCarlo2 = new MonteCarlo(blackScholesModel, OptionTest2,rng, 1,1000000);
 
+    PerformanceOption* OptionTest3 = new PerformanceOption(5,10,2,weights);
+    MonteCarlo* monteCarlo3 = new MonteCarlo(blackScholesModel, OptionTest3,rng, 1,1000000);
+
     double prix = 0.0;
     double std = 0.0;
 
@@ -38,11 +41,15 @@ int main() {
     
     monteCarlo->price(prix,std);
     monteCarlo2->price(prix2,std2);
+    monteCarlo3->price(prix3,std3);
 
     std::cout << "Le prix à l'intant 0 de l'option ASIATIQUE est de  : " << prix << std::endl;
     std::cout << "L'ecart type OPTION ASIATIQUE : " << std << std::endl;
 
     std::cout << "Le prix à l'intant 0 de l'option BASKET est de  : " << prix2 << std::endl;
     std::cout << "L'ecart type OPTION BASKET : " << std2 << std::endl;
+
+    std::cout << "Le prix à l'intant 0 de l'option PERFORMANCE est de  : " << prix3 << std::endl;
+    std::cout << "L'écart type OPTION PERFORMANCE : " << std3 << std::endl;
 }
 
