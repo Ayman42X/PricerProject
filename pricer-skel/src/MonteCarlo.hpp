@@ -56,4 +56,5 @@ class MonteCarlo
      * @param[out] std_dev contient l'écart type de l'estimateur
      */
     void delta(PnlVect* delta, PnlVect* std_dev);
+    void deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* std_dev);
 };
