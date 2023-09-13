@@ -46,8 +46,8 @@ void MonteCarlo::delta(PnlVect* delta, PnlVect* std_dev){
             mod_->asset(path, opt_->T_, opt_->nbTimeSteps_, rng_);
             pnl_mat_clone(shift_path1, path);
             pnl_mat_clone(shift_path2, path);
-            mod_->shiftAsset(shift_path1, path, d, fdStep_, opt_->nbTimeSteps_, opt_->nbTimeSteps_);
-            mod_->shiftAsset(shift_path2, path, d, -fdStep_, opt_->nbTimeSteps_, opt_->nbTimeSteps_);
+            mod_->shiftAsset(shift_path1, path, d, fdStep_, 0, opt_->nbTimeSteps_);
+            mod_->shiftAsset(shift_path2, path, d, -fdStep_, 0, opt_->nbTimeSteps_);
             double dfPayOff = (opt_->payoff(shift_path1) - opt_->payoff(shift_path2)) / (2 * fdStep_ * MGET(path, 0, d));
             LET(delta, d) = GET(delta, d) +  dfPayOff;
             dfEstimator += dfPayOff * dfPayOff;
