@@ -74,9 +74,9 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
         for (size_t d = 0; i < opt_->size_; i++){
             mod_->shiftAsset(path, path, d, fdStep_, 0, opt_->nbTimeSteps_);
             dfPayOff = opt_->payoff(path);
-            mod_->shiftAsset(path, path, d, -2 * fdStep_, 0, opt_->nbTimeSteps_);
+            mod_->shiftAsset(path, path, d, (-2 * fdStep_) / (1 + fdStep_), 0, opt_->nbTimeSteps_);
             dfPayOff -= opt_->payoff(path);
-            mod_->shiftAsset(path, path, d, fdStep_, 0, opt_->nbTimeSteps_);
+            mod_->shiftAsset(path, path, d, fdStep_ / (1 - fdStep_), 0, opt_->nbTimeSteps_);
             dfPayOff /= (2 * fdStep_ * MGET(path, 0, d));
             LET(delta, d) = GET(delta, d) +  dfPayOff;
             LET(std_dev, d) = GET(std_dev, d) +  dfPayOff * dfPayOff;
