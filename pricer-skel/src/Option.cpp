@@ -89,7 +89,7 @@ class PerformanceOption : public Option
             //maj de la performance 
             performance *= (1.0 + term);   
         }
-        return performance - 1.0;   
+        return performance;   
     }
 };
 
