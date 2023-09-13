@@ -13,7 +13,7 @@ void MonteCarlo::price(double& prix, double& std_dev){
         prix += payOff;
         var_M += payOff * payOff;
     }
-    prix /= nbSamples_;
+    prix = exp(-mod_->r_ * opt_->T_) * (prix / nbSamples_);
     var_M = exp(-2 * mod_->r_ * opt_->T_) * ((var_M / nbSamples_) - prix * prix);
     std_dev = sqrt(var_M);
     
@@ -29,8 +29,34 @@ void MonteCarlo::price(const PnlMat* past, double t, double& prix, double& std_d
         prix += payOff;
         var_M += payOff * payOff;
     }
-    prix /= nbSamples_;
-    var_M = exp(-2 * mod_->r_ * opt_->T_) * ((var_M / nbSamples_) - prix * prix);
+    prix = exp(-mod_->r_ * (opt_->T_ - t)) * (prix / nbSamples_);
+    var_M = exp(-2 * mod_->r_ * (opt_->T_ - t)) * ((var_M / nbSamples_) - prix * prix);
     std_dev = sqrt(var_M);
 }
+
+void MonteCarlo::delta(PnlVect* delta, PnlVect* std_dev){
+    PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
+    PnlMat* shift_path1 = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
+    PnlMat* shift_path2 = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
+    for (size_t d = 0; d < opt_->size_; d++)
+    {
+        double dfEstimator = 0;
+        for (size_t i = 0; i < nbSamples_; i++)
+        {
+            mod_->asset(path, opt_->T_, opt_->nbTimeSteps_, rng_);
+            pnl_mat_clone(shift_path1, path);
+            pnl_mat_clone(shift_path2, path);
+            mod_->shiftAsset(shift_path1, path, d, fdStep_, opt_->nbTimeSteps_, opt_->nbTimeSteps_);
+            mod_->shiftAsset(shift_path2, path, d, -fdStep_, opt_->nbTimeSteps_, opt_->nbTimeSteps_);
+            double dfPayOff = (opt_->payoff(shift_path1) - opt_->payoff(shift_path2)) / (2 * fdStep_ * MGET(path, 0, d));
+            LET(delta, d) = GET(delta, d) +  dfPayOff;
+            dfEstimator += dfPayOff * dfPayOff;
+        }
+        LET(delta, d) = exp(-mod_->r_ * opt_->T_) * (GET(delta, d) / nbSamples_);
+        dfEstimator = exp(-2 * mod_->r_ * opt_->T_) * ((dfEstimator / nbSamples_) - GET(delta, d) * GET(delta, d));
+        LET(std_dev, d) = sqrt(dfEstimator);
+    }
+    
+}
+
 

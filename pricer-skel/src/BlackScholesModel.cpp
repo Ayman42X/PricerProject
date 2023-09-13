@@ -69,3 +69,11 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
     pnl_mat_free(&matriceCorrelation);
 }
 
+void BlackScholesModel::shiftAsset(PnlMat* shift_path, const PnlMat* path, int d, double h, double t, double timestep){
+    for (size_t i = (size_t) (t / timestep); i < path->m; i++){
+        MLET(shift_path, i, d) = MGET(shift_path, i, d) * (1 + h);
+    }
+    
+}
+
+
