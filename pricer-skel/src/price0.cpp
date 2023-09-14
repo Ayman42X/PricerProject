@@ -34,7 +34,7 @@ int main(int argc, char** argv)
     if (volatility->size == 1 && size > 1) {
         pnl_vect_resize_from_scalar(volatility, size, GET(volatility, 0));
     }
-
+    
     j.at("spot").get_to(spots);
     if (spots->size == 1 && size > 1) {
         pnl_vect_resize_from_scalar(spots, size, GET(spots, 0));
@@ -42,14 +42,13 @@ int main(int argc, char** argv)
 
     j.at("payoff coefficients").get_to(weights);
     if (weights->size == 1 && size > 1) {
-        pnl_vect_resize_from_scalar(weights, size, GET(volatility, 0));
+        pnl_vect_resize_from_scalar(weights, size, GET(weights, 0));
     }
-
+    
     double maturity;
     j.at("maturity").get_to(maturity);
 
     double strike;
-    j.at("strike").get_to(strike);
 
     double r;
     j.at("interest rate").get_to(r);
@@ -71,10 +70,12 @@ int main(int argc, char** argv)
     Option* option = nullptr;
 
     if (option_type == "basket") {
+        j.at("strike").get_to(strike);
         option = new BasketOption(maturity, nbTimeSteps, size, strike, weights);
     } else if (option_type == "performance") {
         option = new PerformanceOption(maturity, nbTimeSteps, size, weights);
     } else if (option_type == "asian") {
+        j.at("strike").get_to(strike);
         option = new AsianOption(maturity, nbTimeSteps, size, strike, weights);
     }
 
@@ -82,11 +83,13 @@ int main(int argc, char** argv)
 
     double price = 0.0;
     double priceStdDev = 0.0;
-    PnlVect* delta = pnl_vect_new();
-    PnlVect* deltaStdDev = pnl_vect_new();
+    PnlVect* delta = pnl_vect_create(size);
+    PnlVect* deltaStdDev = pnl_vect_create(size);
 
-    monteCarlo->price(price, priceStdDev);
-    monteCarlo->delta(delta, deltaStdDev);
+    monteCarlo->deltaPrice(price, priceStdDev, delta, deltaStdDev);
+
+   // monteCarlo -> price(price, priceStdDev);
+    //monteCarlo -> delta(delta, deltaStdDev);
 
     PricingResults res(price, priceStdDev, delta, deltaStdDev);
     std::cout << res << std::endl;
