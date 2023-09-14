@@ -6,6 +6,8 @@
 #include "PerformanceOption.cpp"
 #include "MonteCarlo.hpp"
 #include "PricingResults.hpp"
+#include "pnl/pnl_matrix.h"
+#include "pnl/pnl_vector.h"
 #include <iostream>
 #include <fstream>
 
@@ -20,9 +22,9 @@ int main(int argc, char** argv)
     int size;
     std::string option_type;
 
-    PnlVect* volatility;
-    PnlVect* weights;
-    PnlVect* spots;
+    PnlVect* volatility = pnl_vect_new();
+    PnlVect* weights = pnl_vect_new();
+    PnlVect* spots = pnl_vect_new();
 
     option_type = j.at("option type").get<std::string>();
 
