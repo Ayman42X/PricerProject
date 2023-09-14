@@ -120,21 +120,26 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
         var_price += payOff * payOff;
         //pnl_mat_clone(shift_path1, path);
         //pnl_mat_clone(shift_path2, path);
-        for (size_t d = 0; i < opt_->size_; i++){
+        for (size_t d = 0; d < opt_->size_; d++){
+            //pnl_mat_print(path);
             mod_->shiftAsset(path, path, d, fdStep_, 0, opt_->nbTimeSteps_);
+            //pnl_mat_print(path);
             dfPayOff = opt_->payoff(path);
             mod_->shiftAsset(path, path, d, (-2 * fdStep_) / (1 + fdStep_), 0, opt_->nbTimeSteps_);
+            //pnl_mat_print(path);
             dfPayOff -= opt_->payoff(path);
             mod_->shiftAsset(path, path, d, fdStep_ / (1 - fdStep_), 0, opt_->nbTimeSteps_);
+            //pnl_mat_print(path);
             dfPayOff /= (2 * fdStep_ * MGET(path, 0, d));
             LET(delta, d) = GET(delta, d) +  dfPayOff;
             LET(std_dev, d) = GET(std_dev, d) +  dfPayOff * dfPayOff;
             dfPayOff = 0;
         }
     }
-    prix = exp(-mod_->r_ * opt_->T_) * (prix / nbSamples_);
+    prix = (prix / nbSamples_);
     var_price = exp(-2 * mod_->r_ * opt_->T_) * ((var_price / nbSamples_) - prix * prix);
-    std = sqrt(var_price);
+    prix *= exp(-mod_->r_ * opt_->T_);
+    std = sqrt(var_price/nbSamples_);
     for (size_t d = 0; d < opt_->size_; d++){
         LET(delta, d) = exp(-mod_->r_ * opt_->T_) * (GET(delta, d) / nbSamples_);
         LET(std_dev, d) = exp(-2 * mod_->r_ * opt_->T_) * ((GET(std_dev, d) / nbSamples_) - GET(delta, d) * GET(delta, d));
