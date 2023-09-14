@@ -55,4 +55,6 @@ class MonteCarlo
     void delta(PnlVect* delta, PnlVect* std_dev);
 
     void deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* std_dev);
+
+    void deltPrice(const PnlMat* past, double t, double& prix, double& std, PnlVect* delta, PnlVect* std_dev);
 };

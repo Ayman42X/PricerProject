@@ -24,7 +24,7 @@ void MonteCarlo::price(const PnlMat* past, double t, double& prix, double& std_d
     double var_M = 0;
     for (size_t i = 0; i < nbSamples_; i++)
     {
-        mod_->asset(path, t, opt_->T_, opt_->nbTimeSteps_, rng_, past);
+        //mod_->asset(path, t, opt_->T_, opt_->nbTimeSteps_, rng_, past);
         double payOff = opt_->payoff(path);
         prix += payOff;
         var_M += payOff * payOff;
@@ -60,8 +60,6 @@ void MonteCarlo::delta(PnlVect* delta, PnlVect* std_dev){
 
 void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* std_dev){
     PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
-    //PnlMat* shift_path1 = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
-    //PnlMat* shift_path2 = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
     double var_price = 0;
     double dfPayOff = 0;
     for (size_t i = 0; i < nbSamples_; i++){
@@ -69,9 +67,7 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
         double payOff = opt_->payoff(path);
         prix += payOff;
         var_price += payOff * payOff;
-        //pnl_mat_clone(shift_path1, path);
-        //pnl_mat_clone(shift_path2, path);
-        for (size_t d = 0; i < opt_->size_; i++){
+        for (size_t d = 0; d < opt_->size_; d++){
             mod_->shiftAsset(path, path, d, fdStep_, 0, opt_->nbTimeSteps_);
             dfPayOff = opt_->payoff(path);
             mod_->shiftAsset(path, path, d, (-2 * fdStep_) / (1 + fdStep_), 0, opt_->nbTimeSteps_);
@@ -83,15 +79,50 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
             dfPayOff = 0;
         }
     }
-    prix = exp(-mod_->r_ * opt_->T_) * (prix / nbSamples_);
+    prix = (prix / nbSamples_);
     var_price = exp(-2 * mod_->r_ * opt_->T_) * ((var_price / nbSamples_) - prix * prix);
-    std = sqrt(var_price);
+    prix *= exp(-mod_->r_ * opt_->T_);
+    std = sqrt(var_price/nbSamples_);
     for (size_t d = 0; d < opt_->size_; d++){
         LET(delta, d) = exp(-mod_->r_ * opt_->T_) * (GET(delta, d) / nbSamples_);
         LET(std_dev, d) = exp(-2 * mod_->r_ * opt_->T_) * ((GET(std_dev, d) / nbSamples_) - GET(delta, d) * GET(delta, d));
         LET(std_dev, d) = sqrt(GET(std_dev, d));
     }
-    
 }
+
+void MonteCarlo::deltPrice(const PnlMat* past, double t, double& prix, double& std, PnlVect* delta, PnlVect* std_dev){
+    PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
+    PnlVect* s_t = pnl_vect_create(opt_->size_);
+    double timeStep = opt_->T_ / opt_->nbTimeSteps_;
+    double var_price = 0;
+    double dfPayOff = 0;
+    for (size_t i = 0; i < nbSamples_; i++){
+        mod_->asset(path, t, s_t, opt_->T_, opt_->nbTimeSteps_, rng_, past);
+        double payOff = opt_->payoff(path);
+        prix += payOff;
+        var_price += payOff * payOff;
+        for (size_t d = 0; d < opt_->size_; d++){
+            mod_->shiftAsset(path, path, d, fdStep_, t, opt_->nbTimeSteps_);
+            dfPayOff = opt_->payoff(path);
+            mod_->shiftAsset(path, path, d, (-2 * fdStep_) / (1 + fdStep_), t + timeStep, opt_->nbTimeSteps_);
+            dfPayOff -= opt_->payoff(path);
+            mod_->shiftAsset(path, path, d, fdStep_ / (1 - fdStep_), t + timeStep, opt_->nbTimeSteps_);
+            dfPayOff /= (2 * fdStep_ * GET(s_t, d));
+            LET(delta, d) = GET(delta, d) +  dfPayOff;
+            LET(std_dev, d) = GET(std_dev, d) +  dfPayOff * dfPayOff;
+            dfPayOff = 0;
+        }
+    }
+    prix = (prix / nbSamples_);
+    var_price = exp(-2 * mod_->r_ * (opt_->T_ - t)) * ((var_price / nbSamples_) - prix * prix);
+    prix *= exp(-mod_->r_ * (opt_->T_ - t));
+    std = sqrt(var_price/nbSamples_);
+    for (size_t d = 0; d < opt_->size_; d++){
+        LET(delta, d) = exp(-mod_->r_ * (opt_->T_ - t)) * (GET(delta, d) / nbSamples_);
+        LET(std_dev, d) = exp(-2 * mod_->r_ * (opt_->T_ - t)) * ((GET(std_dev, d) / nbSamples_) - GET(delta, d) * GET(delta, d));
+        LET(std_dev, d) = sqrt(GET(std_dev, d));
+    }
+}
+
 
 
