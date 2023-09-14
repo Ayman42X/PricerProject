@@ -7,7 +7,6 @@
 #include "AsianOption.cpp"
 #include "BasketOption.cpp"
 #include "PerformanceOption.cpp"
-#include "Option.cpp"
 #include "MonteCarlo.cpp"
 
 int main() {
@@ -19,19 +18,23 @@ int main() {
     PnlVect* weights = pnl_vect_create_from_scalar(2,0.5);
 
     pnl_rng_sseed(rng, time(NULL));
-    //BlackScholesModel* blackScholesModel = new BlackScholesModel(2,0.02,0.0,sigma,spot);
+    BlackScholesModel* blackScholesModel = new BlackScholesModel(2,0.02,0.0,sigma,spot);
 // Option Asiatique
     // AsianOption* OptionTest = new AsianOption(1.5,150,2,100,weights);
     // MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, OptionTest,rng, 0.0001,50000);
     // double prix = 0.0;
     // double std = 0.0;
-    // //monteCarlo->price(prix,std);
+    // monteCarlo->price(prix,std);
 
     // PnlVect* delta = pnl_vect_create(2);
     // PnlVect* stdVect = pnl_vect_create(2);
-    
     // monteCarlo->deltaPrice(prix,std,delta,stdVect);
     // pnl_vect_print(delta);
+    // PnlMat* past = pnl_mat_create(101,2);
+    // blackScholesModel->asset(past,0.5,50,rng);
+    // double prix1 = 0.0;
+    // double std1 = 0.0;
+    // monteCarlo->price(past,0.5009,prix1,std1);
 //Option Basket
     PnlVect* sigmaB = pnl_vect_create_from_scalar(40,0.2);
     PnlVect* spotB = pnl_vect_create_from_scalar(40,100);
@@ -44,6 +47,11 @@ int main() {
     PnlVect* delta = pnl_vect_create(40);
     PnlVect* stdVect = pnl_vect_create(40);
     monteCarloBasket->price(prix2,std2);
+    PnlMat* past = pnl_mat_create(2,40);
+    BasketblackScholesModel->asset(past,1,1,rng);
+    double prix1 = 0.0;
+    double std1 = 0.0;
+    monteCarloBasket->price(past,0.5,prix1,std1);
     monteCarloBasket->delta(delta,stdVect);
     pnl_vect_print(delta);
 //Option Performance  

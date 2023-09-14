@@ -54,4 +54,6 @@ class BlackScholesModel
      * @param[in] timestep pas de constatation du sous-jacent
      */
     void shiftAsset(PnlMat* shift_path, const PnlMat* path, int d, double h, double t, double timestep);
+
+    void price_handler(PnlVect* LastSpots,int d,double t,int myLastRaw,double timeStep,PnlMat* matriceCorrelation, PnlRng* rng);
 };
