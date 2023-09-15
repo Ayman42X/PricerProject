@@ -120,7 +120,8 @@ int main(int argc, char** argv)
         pnl_mat_get_row(initSpots, path, i);
         currentPortfolioValue-= pnl_vect_scalar_prod(diffDeltas, initSpots);
         lastPortfolioValue = currentPortfolioValue;
-        delta = initDelta;
+        initDelta = delta;
+        std::cout << i << std::endl;
     }
 
     finalPnl = lastPortfolioValue + pnl_vect_scalar_prod(delta, initSpots) - option->payoff(path);

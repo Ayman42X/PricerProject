@@ -11,7 +11,7 @@ class BlackScholesModel
     double rho_;     /// paramètre de corrélation
     PnlVect* sigma_; /// vecteur de volatilités
     PnlVect* spot_;  /// valeurs initiales des sous-jacents
-
+    PnlVect* trend_;
     /**
      * Declaration de Constructeur
      */
@@ -54,4 +54,5 @@ class BlackScholesModel
      * @param[in] timestep pas de constatation du sous-jacent
      */
     void shiftAsset(PnlMat* shift_path, const PnlMat* path, int d, double h, double t, double timestep);
+    void simul_market(PnlMat* path, double T, int H, PnlRng* rng);
 };

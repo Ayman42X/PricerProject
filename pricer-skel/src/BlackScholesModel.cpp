@@ -95,3 +95,35 @@ void BlackScholesModel::shiftAsset(PnlMat* shift_path, const PnlMat* path, int d
         MLET(shift_path, i, d) = MGET(shift_path, i, d) * (1 + h);
     }
 }
+
+void BlackScholesModel::simul_market(PnlMat* path, double T, int H, PnlRng* rng){
+    double timeStep = T/H;
+    int d = this->spot_->size;
+    pnl_mat_set_row(path,this->spot_,0);
+    PnlVect* G = pnl_vect_new();
+    PnlVect* L = pnl_vect_new();
+    PnlMat* matriceCorrelation = pnl_mat_create_from_scalar(d,d,this->rho_);
+    for (int k = 0;k<d;k++){
+        pnl_mat_set(matriceCorrelation,k,k,1.0);
+    }
+    //pnl_mat_print(matriceCorrelation);
+    pnl_mat_chol(matriceCorrelation);
+    //pnl_mat_print(matriceCorrelation);
+    for (int t=1;t<H+1;t++){
+        pnl_vect_rng_normal(G,d,rng);
+        for (int j=0;j<d;j++){
+            double sigmaShare = pnl_vect_get(this->sigma_,j);
+            double trendShare = GET(this->trend_,j);
+            double quantity = (trendShare- (sigmaShare*sigmaShare)/2)*timeStep;
+            pnl_mat_get_row(L,matriceCorrelation,j);
+            quantity += sigmaShare*sqrt(timeStep)*pnl_vect_scalar_prod(L,G);
+            quantity = exp(quantity);
+            double share = MGET(path,t-1,j);
+            share*=quantity;
+            MLET(path,t,j) = share; 
+        } 
+    }
+    pnl_vect_free(&G);
+    pnl_vect_free(&L);
+    pnl_mat_free(&matriceCorrelation);
+}

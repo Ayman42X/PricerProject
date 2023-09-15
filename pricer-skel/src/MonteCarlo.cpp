@@ -42,7 +42,7 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
 }
 
 void MonteCarlo::deltaPrice(const PnlMat* past, double t, double& prix, double& std, PnlVect* delta, PnlVect* std_dev){
-    PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
+    PnlMat* path = pnl_mat_create(past->m , opt_->size_);
     double timeStep = opt_->T_ / opt_->nbTimeSteps_;
     size_t iPlus1 = static_cast<size_t>(std::ceil(t/timeStep));
     PnlVect* s_t = pnl_vect_create(opt_->size_);
