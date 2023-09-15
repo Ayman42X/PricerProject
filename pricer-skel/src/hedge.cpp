@@ -5,26 +5,24 @@
 #include "BasketOption.cpp"
 #include "PerformanceOption.cpp"
 #include "MonteCarlo.hpp"
-#include "PricingResults.hpp"
-#include "pnl/pnl_matrix.h"
-#include "pnl/pnl_vector.h"
+#include "HedgingResults.hpp"
 #include <iostream>
 #include <fstream>
 
 int main(int argc, char** argv)
 {
-    if (argc != 2) {
-        std::cerr << "Wrong number of arguments. Exactly one argument is required" << std::endl;
+    if (argc != 3) {
+        std::cerr << "Wrong number of arguments. Exactly two arguments are required" << std::endl;
         std::exit(0);
     }
-    std::ifstream ifs(argv[1]);
+    std::ifstream ifs(argv[2]);
     nlohmann::json j = nlohmann::json::parse(ifs);
     int size;
     std::string option_type;
 
-    PnlVect* volatility = pnl_vect_new();
-    PnlVect* weights = pnl_vect_new();
-    PnlVect* spots = pnl_vect_new();
+    PnlVect* volatility;
+    PnlVect* weights;
+    PnlVect* spots;
 
     option_type = j.at("option type").get<std::string>();
 
@@ -34,7 +32,7 @@ int main(int argc, char** argv)
     if (volatility->size == 1 && size > 1) {
         pnl_vect_resize_from_scalar(volatility, size, GET(volatility, 0));
     }
-    
+
     j.at("spot").get_to(spots);
     if (spots->size == 1 && size > 1) {
         pnl_vect_resize_from_scalar(spots, size, GET(spots, 0));
@@ -42,9 +40,9 @@ int main(int argc, char** argv)
 
     j.at("payoff coefficients").get_to(weights);
     if (weights->size == 1 && size > 1) {
-        pnl_vect_resize_from_scalar(weights, size, GET(weights, 0));
+        pnl_vect_resize_from_scalar(weights, size, GET(volatility, 0));
     }
-    
+
     double maturity;
     j.at("maturity").get_to(maturity);
 
@@ -81,19 +79,41 @@ int main(int argc, char** argv)
 
     MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, option, rng, 0.0001, nbSamples);
 
-    double price = 0.0;
-    double priceStdDev = 0.0;
+   
+    double initialPrice = 0.0;
+    double initialPriceStdDev = 0.0;
+    double finalPnl = 0.0;
+    PnlVect* initDelta = pnl_vect_create(size);
+    PnlVect* initDeltaStdDev = pnl_vect_create(size);
+
     PnlVect* delta = pnl_vect_create(size);
     PnlVect* deltaStdDev = pnl_vect_create(size);
+    
+    PnlMat* path = pnl_mat_create(nbTimeSteps + 1, size);
+    double t = 0.0;
+    
+    // prix et delta à t = 0
+    monteCarlo->price(initialPrice, initialPriceStdDev);
+    monteCarlo->delta(initDelta, initDeltaStdDev);
 
-    monteCarlo->deltaPrice(price, priceStdDev, delta, deltaStdDev);
+    double lastPortfolioValue = initialPrice - GET(initDelta, 0) * GET(spots, 0);
+    double currentPortfolioValue = 0.0;
 
-   // monteCarlo -> price(price, priceStdDev);
-    //monteCarlo -> delta(delta, deltaStdDev);
 
-    PricingResults res(price, priceStdDev, delta, deltaStdDev);
-    std::cout << res << std::endl;
+    for (int i = 1; i <= nbTimeSteps; i++) {
+        monteCarlo->delta(path, t, delta, deltaStdDev);
+        currentPortfolioValue = lastPortfolioValue*exp(r*maturity/nbTimeSteps)-(GET(delta, i) - GET(delta, i-1))*GET(spots, i);
+        lastPortfolioValue = currentPortfolioValue;
+    }
 
+    finalPnl = lastPortfolioValue + GET(delta, nbTimeSteps) * GET(spots, nbTimeSteps) - option->payoff(path);
+
+    HedgingResults hedge(initialPrice, initialPriceStdDev, finalPnl);;
+    std::cout << hedge << std::endl;
+
+
+    pnl_vect_free(&initDelta);
+    pnl_vect_free(&initDeltaStdDev);
     pnl_vect_free(&delta);
     pnl_vect_free(&deltaStdDev);
     pnl_vect_free(&spots);

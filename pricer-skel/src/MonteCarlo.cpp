@@ -37,7 +37,7 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
     for (size_t d = 0; d < opt_->size_; d++){
         LET(delta, d) = exp(-mod_->r_ * opt_->T_) * (GET(delta, d) / nbSamples_);
         LET(std_dev, d) = exp(-2 * mod_->r_ * opt_->T_) * ((GET(std_dev, d) / nbSamples_) - GET(delta, d) * GET(delta, d));
-        LET(std_dev, d) = sqrt(GET(std_dev, d));
+        LET(std_dev, d) = sqrt(GET(std_dev, d)/nbSamples_);
     }
 }
 
