@@ -41,51 +41,46 @@ void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* r
     pnl_mat_free(&matriceCorrelation);
 }
 
-void BlackScholesModel::price_handler(PnlVect* LastSpots,int d,double t,int myLastRaw,double timeStep,PnlMat* matriceCorrelation, PnlRng* rng){
-    PnlVect* G = pnl_vect_create(d);
-    PnlVect* L = pnl_vect_create(d);
-    pnl_vect_rng_normal(G,d,rng);
-    for(int j=0;j<d;j++){
-        double sigmaShare = pnl_vect_get(this->sigma_,j);
-        double quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*(t-myLastRaw*timeStep);
-        pnl_mat_get_row(L,matriceCorrelation,j);
-        quantity += sigmaShare*sqrt(t-myLastRaw*timeStep)*pnl_vect_scalar_prod(G,L);
-        quantity = exp(quantity);
-        double share = pnl_vect_get(LastSpots,j);
-        share*=quantity;
-        pnl_vect_set(LastSpots,j,share);
-    }
-}
-
 
 void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps, PnlRng* rng, const PnlMat* past){
+    // Initialisation de variables utilisées
     double timeStep = T/nbTimeSteps;
     int d = this->spot_->size;
-    pnl_mat_set_subblock(path,past,0,0);
-    PnlVect* LastSpots = pnl_vect_create(d);
-    int myLastRaw = static_cast<int>(floor(t*nbTimeSteps/T));
+    int iPlus1 = static_cast<int>(std::ceil(t/timeStep));
     PnlVect* G = pnl_vect_new();
     PnlVect* L = pnl_vect_new();
+    PnlVect* s_t = pnl_vect_create(d);
+    pnl_mat_set_subblock(path,past,0,0);
+    // Calcul de la matrice de correlation
     PnlMat* matriceCorrelation = pnl_mat_create_from_scalar(d,d,this->rho_);
     for (int k = 0;k<d;k++){
         pnl_mat_set(matriceCorrelation,k,k,1.0);
     }
     pnl_mat_chol(matriceCorrelation);
-    // Calcul des prix à S_t
-    pnl_mat_get_row(LastSpots,past,myLastRaw);
-    price_handler(LastSpots,d,t,myLastRaw,timeStep,matriceCorrelation,rng);
-    double newStartingDate = (myLastRaw+1)*timeStep - t;
-    for (int temps=myLastRaw+1;temps<nbTimeSteps+1;temps++){
+    pnl_mat_get_row(s_t,past,iPlus1);
+    double newStartingDate = (iPlus1)*timeStep - t;
+    for (int temps=iPlus1;temps<nbTimeSteps+1;temps++){
         pnl_vect_rng_normal(G,d,rng);
         for (int j=0;j<d;j++){
             double sigmaShare = pnl_vect_get(this->sigma_,j);
-            double quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*(newStartingDate+(temps-myLastRaw-1)*timeStep);   
+            double quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*(timeStep);
+            if (temps == iPlus1){
+                quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*(newStartingDate);
+            }   
             pnl_mat_get_row(L,matriceCorrelation,j);
-            quantity += sigmaShare*sqrt(newStartingDate+(temps-myLastRaw- 1)*timeStep)*pnl_vect_scalar_prod(G,L);
+            if (temps == iPlus1){
+                quantity += sigmaShare*sqrt(newStartingDate)*pnl_vect_scalar_prod(G,L);
+            }
+            else{
+                quantity += sigmaShare*sqrt(timeStep)*pnl_vect_scalar_prod(G,L);
+            }
             quantity = exp(quantity);
-            double share = pnl_vect_get(LastSpots,j);
+            double share = MGET(path,temps-1,j);
+            if (temps == iPlus1){
+                share = MGET(path,temps,j);
+            }
             share*=quantity;
-            pnl_mat_set(path,temps,j,share);
+            MLET(path,temps,j) = share;
         }
     }
     pnl_vect_free(&G);
@@ -95,7 +90,8 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
 
 
 void BlackScholesModel::shiftAsset(PnlMat* shift_path, const PnlMat* path, int d, double h, double t, double timestep){
-    for (size_t i = (size_t) (t / timestep); i < path->m; i++){
+    size_t timeTRowIndex = static_cast<size_t>(std::ceil(t / timestep));
+    for (size_t i = timeTRowIndex; i < path->m; i++){
         MLET(shift_path, i, d) = MGET(shift_path, i, d) * (1 + h);
     }
 }

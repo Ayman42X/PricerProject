@@ -40,19 +40,17 @@ int main() {
     PnlVect* spotB = pnl_vect_create_from_scalar(40,100);
     BlackScholesModel* BasketblackScholesModel = new BlackScholesModel(40,0.04879,0.7,sigmaB,spotB);
     PnlVect* weightsBasket = pnl_vect_create_from_scalar(40,0.025);
-    BasketOption* OptionTest2 = new BasketOption(1.0,1,40,100,weightsBasket);
+    BasketOption* OptionTest2 = new BasketOption(1,1,40,100,weightsBasket);
     MonteCarlo* monteCarloBasket = new MonteCarlo(BasketblackScholesModel, OptionTest2,rng, 0.0001,50000);
-    double prix2 = 0.0;
-    double std2 = 0.0;
     PnlVect* delta = pnl_vect_create(40);
     PnlVect* stdVect = pnl_vect_create(40);
-    monteCarloBasket->price(prix2,std2);
     PnlMat* past = pnl_mat_create(2,40);
-    BasketblackScholesModel->asset(past,1,1,rng);
+    pnl_mat_set_row(past,spotB,0);
+    pnl_mat_set_row(past,spotB,1);
     double prix1 = 0.0;
     double std1 = 0.0;
-    monteCarloBasket->price(past,0.5,prix1,std1);
-    monteCarloBasket->delta(delta,stdVect);
+    // monteCarloBasket->deltaPrice(prix1,std1,delta,stdVect);
+    monteCarloBasket->deltaPrice(past,0.5,prix1,std1,delta,stdVect);
     pnl_vect_print(delta);
 //Option Performance  
 //    PnlVect* sigmaP =   pnl_vect_create_from_scalar(5,0.2);
@@ -60,8 +58,11 @@ int main() {
 //    BlackScholesModel* PerformanceblackScholesModel = new BlackScholesModel(5,0.03,0.5,sigmaP,spotP);
 //    PnlVect* weightsPerformance = pnl_vect_create_from_scalar(5,0.2);
 //    PerformanceOption* OptionTest3 = new PerformanceOption(2.0,12,5,weightsPerformance);
-//    MonteCarlo* monteCarloPerformance = new MonteCarlo(PerformanceblackScholesModel, OptionTest3,rng, 1,50000);
+//    MonteCarlo* monteCarloPerformance = new MonteCarlo(PerformanceblackScholesModel, OptionTest3,rng, 0.0001,50000);
 //     double prix3 = 0.0;
 //     double std3 = 0.0;
-//     monteCarloPerformance->price(prix3,std3);
+//     PnlVect* delta3 = pnl_vect_create(5);
+//     PnlVect* stdDelta3 = pnl_vect_create(5);
+//     monteCarloPerformance->deltaPrice(prix3,std3,delta3,stdDelta3);
+//     pnl_vect_print(delta3);
 }
