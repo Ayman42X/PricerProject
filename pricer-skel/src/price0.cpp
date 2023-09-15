@@ -62,6 +62,9 @@ int main(int argc, char** argv)
     int nbSamples;
     j.at("sample number").get_to(nbSamples);
 
+    double fdStep;
+    j.at("fd step").get_to(fdStep);
+
     PnlRng* rng = pnl_rng_create(PNL_RNG_MERSENNE);
     pnl_rng_sseed(rng, time(NULL));
 
@@ -79,7 +82,7 @@ int main(int argc, char** argv)
         option = new AsianOption(maturity, nbTimeSteps, size, strike, weights);
     }
 
-    MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, option, rng, 0.0001, nbSamples);
+    MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, option, rng, fdStep, nbSamples);
 
     double price = 0.0;
     double priceStdDev = 0.0;
@@ -87,9 +90,6 @@ int main(int argc, char** argv)
     PnlVect* deltaStdDev = pnl_vect_create(size);
 
     monteCarlo->deltaPrice(price, priceStdDev, delta, deltaStdDev);
-
-   // monteCarlo -> price(price, priceStdDev);
-    //monteCarlo -> delta(delta, deltaStdDev);
 
     PricingResults res(price, priceStdDev, delta, deltaStdDev);
     std::cout << res << std::endl;

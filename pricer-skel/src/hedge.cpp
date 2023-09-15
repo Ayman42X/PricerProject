@@ -6,6 +6,8 @@
 #include "PerformanceOption.cpp"
 #include "MonteCarlo.hpp"
 #include "HedgingResults.hpp"
+#include "pnl/pnl_matrix.h"
+#include "pnl/pnl_vector.h"
 #include <iostream>
 #include <fstream>
 
@@ -40,7 +42,7 @@ int main(int argc, char** argv)
 
     j.at("payoff coefficients").get_to(weights);
     if (weights->size == 1 && size > 1) {
-        pnl_vect_resize_from_scalar(weights, size, GET(volatility, 0));
+        pnl_vect_resize_from_scalar(weights, size, GET(weights, 0));
     }
 
     double maturity;
@@ -60,6 +62,12 @@ int main(int argc, char** argv)
     int nbSamples;
     j.at("sample number").get_to(nbSamples);
 
+    int nbHedgingdates;
+    j.at("hedging dates number").get_to(nbHedgingdates);
+
+    double fdStep;
+    j.at("fd step").get_to(fdStep);
+
     PnlRng* rng = pnl_rng_create(PNL_RNG_MERSENNE);
     pnl_rng_sseed(rng, time(NULL));
 
@@ -77,7 +85,7 @@ int main(int argc, char** argv)
         option = new AsianOption(maturity, nbTimeSteps, size, strike, weights);
     }
 
-    MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, option, rng, 0.0001, nbSamples);
+    MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, option, rng, fdStep, nbSamples);
 
    
     double initialPrice = 0.0;
@@ -89,24 +97,33 @@ int main(int argc, char** argv)
     PnlVect* delta = pnl_vect_create(size);
     PnlVect* deltaStdDev = pnl_vect_create(size);
     
-    PnlMat* path = pnl_mat_create(nbTimeSteps + 1, size);
-    double t = 0.0;
+    PnlMat* path = pnl_mat_create_from_file(argv[1]);
     
     // prix et delta à t = 0
-    monteCarlo->price(initialPrice, initialPriceStdDev);
-    monteCarlo->delta(initDelta, initDeltaStdDev);
+    monteCarlo->deltaPrice(initialPrice, initialPriceStdDev, initDelta, initDeltaStdDev);
+    double prix = 0.0;
+    double stdPrix = 0.0;
 
-    double lastPortfolioValue = initialPrice - GET(initDelta, 0) * GET(spots, 0);
+
+    PnlVect* initSpots = pnl_vect_create(size);
+    pnl_mat_get_row(initSpots, path, 0);
+    double lastPortfolioValue = initialPrice - pnl_vect_scalar_prod(initDelta, initSpots);
     double currentPortfolioValue = 0.0;
 
-
-    for (int i = 1; i <= nbTimeSteps; i++) {
-        monteCarlo->delta(path, t, delta, deltaStdDev);
-        currentPortfolioValue = lastPortfolioValue*exp(r*maturity/nbTimeSteps)-(GET(delta, i) - GET(delta, i-1))*GET(spots, i);
+    PnlVect* diffDeltas = pnl_vect_create(size);
+    for (int i = 1; i <= nbHedgingdates; i++) {
+        monteCarlo->deltaPrice(path, fdStep, prix, stdPrix, delta, deltaStdDev);
+        currentPortfolioValue = lastPortfolioValue*exp(r*maturity/nbHedgingdates);
+        for (int d = 0; d < size; d++) {
+            LET(diffDeltas, d) = GET(delta, d) - GET(initDelta, d);
+        }
+        pnl_mat_get_row(initSpots, path, i);
+        currentPortfolioValue-= pnl_vect_scalar_prod(diffDeltas, initSpots);
         lastPortfolioValue = currentPortfolioValue;
+        delta = initDelta;
     }
 
-    finalPnl = lastPortfolioValue + GET(delta, nbTimeSteps) * GET(spots, nbTimeSteps) - option->payoff(path);
+    finalPnl = lastPortfolioValue + pnl_vect_scalar_prod(delta, initSpots) - option->payoff(path);
 
     HedgingResults hedge(initialPrice, initialPriceStdDev, finalPnl);;
     std::cout << hedge << std::endl;
