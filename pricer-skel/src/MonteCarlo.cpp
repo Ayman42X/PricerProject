@@ -10,7 +10,7 @@ MonteCarlo::MonteCarlo(BlackScholesModel* mod, Option* opt, PnlRng* rng, double 
 
 
 void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* std_dev){
-          PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
+    PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ + 1, opt_->size_);
     double var_price = 0;
     double dfPayOff = 0;
     for (size_t i = 0; i < nbSamples_; i++){
@@ -39,10 +39,11 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
         LET(std_dev, d) = exp(-2 * mod_->r_ * opt_->T_) * ((GET(std_dev, d) / nbSamples_) - GET(delta, d) * GET(delta, d));
         LET(std_dev, d) = sqrt(GET(std_dev, d)/nbSamples_);
     }
+    pnl_mat_free(&path);
 }
 
 void MonteCarlo::deltaPrice(const PnlMat* past, double t, double& prix, double& std, PnlVect* delta, PnlVect* std_dev){
-    PnlMat* path = pnl_mat_create(past->m , opt_->size_);
+    PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ +1, opt_->size_);
     double timeStep = opt_->T_ / opt_->nbTimeSteps_;
     size_t iPlus1 = static_cast<size_t>(std::ceil(t/timeStep));
     PnlVect* s_t = pnl_vect_create(opt_->size_);
@@ -75,4 +76,6 @@ void MonteCarlo::deltaPrice(const PnlMat* past, double t, double& prix, double& 
         LET(std_dev, d) = exp(-2 * mod_->r_ * (opt_->T_ - t)) * ((GET(std_dev, d) / nbSamples_) - GET(delta, d) * GET(delta, d));
         LET(std_dev, d) = sqrt(GET(std_dev, d));
     }
+    pnl_mat_free(&path);
+    pnl_vect_free(&s_t);
 }

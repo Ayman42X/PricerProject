@@ -54,6 +54,8 @@ target_link_libraries(mc-example ${LIBS})
 
 add_executable(TestBlackScholes src/TestBlackScholes.cpp src/BlackScholesModel.cpp)
 target_link_libraries(TestBlackScholes ${LIBS})
+add_executable(hedge src/hedge.cpp src/BlackScholesModel.cpp src/MonteCarlo.cpp src/HedgingResults.cpp src/json_helper.cpp)
+target_link_libraries(hedge ${LIBS} nlohmann_json::nlohmann_json)
 
 add_executable(price0 src/price0.cpp src/BlackScholesModel.cpp src/MonteCarlo.cpp src/PricingResults.cpp src/json_helper.cpp)
 target_link_libraries(price0 ${LIBS} nlohmann_json::nlohmann_json)

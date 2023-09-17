@@ -107,24 +107,55 @@ int main(int argc, char** argv)
 
     PnlVect* initSpots = pnl_vect_create(size);
     pnl_mat_get_row(initSpots, path, 0);
-    double lastPortfolioValue = initialPrice - pnl_vect_scalar_prod(initDelta, initSpots);
+    double CashValue = initialPrice - pnl_vect_scalar_prod(initDelta, initSpots);
     double currentPortfolioValue = 0.0;
-
+    PnlMat* past = pnl_mat_create_from_scalar(nbTimeSteps+1,path->n,0.0);
+    PnlVect* vect = pnl_vect_create(size);
+    pnl_mat_set_row(past,initSpots,0);
+    
+    // PnlVect* vect = pnl_vect_create(path->n);
+    // pnl_mat_get_row(vect,path,1);
+    // pnl_mat_set_row(past,vect,1);
     PnlVect* diffDeltas = pnl_vect_create(size);
     for (int i = 1; i <= nbHedgingdates; i++) {
-        monteCarlo->deltaPrice(path, fdStep, prix, stdPrix, delta, deltaStdDev);
-        currentPortfolioValue = lastPortfolioValue*exp(r*maturity/nbHedgingdates);
+        double dateHedging = i*maturity/nbHedgingdates;
+        past = pnl_mat_create_from_scalar(nbTimeSteps+1,size,0.0);
+        pnl_mat_set_row(past,initSpots,0);
+        size_t temps = static_cast<size_t>(std::ceil(dateHedging*nbTimeSteps/maturity));
+        for (size_t j = 0; j < temps +1;j++){
+            vect = pnl_vect_create(size);
+            size_t tempsConstatH = j*nbHedgingdates/nbTimeSteps;
+            if (i<tempsConstatH){
+                pnl_mat_get_row(vect,path,i);
+                pnl_mat_set_row(past,vect,j);
+            }
+            else{
+                pnl_mat_get_row(vect,path,tempsConstatH);
+                pnl_mat_set_row(past,vect,j);
+            }
+            pnl_vect_free(&vect);
+        }
+        // PnlVect* vectDebug0 = pnl_vect_create(size);
+        // pnl_mat_get_row(vectDebug0,past,0);
+        // pnl_vect_print(vectDebug0);
+        // PnlVect* vectDebug1 = pnl_vect_create(size);
+        // pnl_mat_get_row(vectDebug1,past,1);
+        // pnl_vect_print(vectDebug1);
+        monteCarlo->deltaPrice(past,dateHedging, prix, stdPrix, delta, deltaStdDev);
+        currentPortfolioValue = CashValue*exp((r*maturity)/nbHedgingdates);
         for (int d = 0; d < size; d++) {
             LET(diffDeltas, d) = GET(delta, d) - GET(initDelta, d);
         }
         pnl_mat_get_row(initSpots, path, i);
         currentPortfolioValue-= pnl_vect_scalar_prod(diffDeltas, initSpots);
-        lastPortfolioValue = currentPortfolioValue;
+        CashValue = currentPortfolioValue;
         initDelta = delta;
+        double pnl = CashValue + pnl_vect_scalar_prod(delta, initSpots) - option->payoff(path);
         std::cout << i << std::endl;
+        std::cout << prix << std::endl;
     }
 
-    finalPnl = lastPortfolioValue + pnl_vect_scalar_prod(delta, initSpots) - option->payoff(path);
+    finalPnl = CashValue + pnl_vect_scalar_prod(delta, initSpots) - option->payoff(path);
 
     HedgingResults hedge(initialPrice, initialPriceStdDev, finalPnl);;
     std::cout << hedge << std::endl;

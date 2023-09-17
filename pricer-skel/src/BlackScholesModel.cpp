@@ -43,13 +43,11 @@ void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* r
 
 
 void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps, PnlRng* rng, const PnlMat* past){
-    // Initialisation de variables utilisées
-    double timeStep = T/nbTimeSteps;
+   double timeStep = T/nbTimeSteps;
     int d = this->spot_->size;
     int iPlus1 = static_cast<int>(std::ceil(t/timeStep));
     PnlVect* G = pnl_vect_new();
     PnlVect* L = pnl_vect_new();
-    PnlVect* s_t = pnl_vect_create(d);
     pnl_mat_set_subblock(path,past,0,0);
     // Calcul de la matrice de correlation
     PnlMat* matriceCorrelation = pnl_mat_create_from_scalar(d,d,this->rho_);
@@ -57,27 +55,25 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
         pnl_mat_set(matriceCorrelation,k,k,1.0);
     }
     pnl_mat_chol(matriceCorrelation);
-    pnl_mat_get_row(s_t,past,iPlus1);
     double newStartingDate = (iPlus1)*timeStep - t;
     for (int temps=iPlus1;temps<nbTimeSteps+1;temps++){
         pnl_vect_rng_normal(G,d,rng);
         for (int j=0;j<d;j++){
             double sigmaShare = pnl_vect_get(this->sigma_,j);
-            double quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*(timeStep);
+            pnl_mat_get_row(L,matriceCorrelation,j);
+            double quantity = 0.0;
+            double share = 0.0;
             if (temps == iPlus1){
                 quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*(newStartingDate);
-            }   
-            pnl_mat_get_row(L,matriceCorrelation,j);
-            if (temps == iPlus1){
                 quantity += sigmaShare*sqrt(newStartingDate)*pnl_vect_scalar_prod(G,L);
+                quantity = exp(quantity);
+                share = MGET(path,temps,j);
             }
             else{
+                quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*(timeStep);
                 quantity += sigmaShare*sqrt(timeStep)*pnl_vect_scalar_prod(G,L);
-            }
-            quantity = exp(quantity);
-            double share = MGET(path,temps-1,j);
-            if (temps == iPlus1){
-                share = MGET(path,temps,j);
+                quantity = exp(quantity);
+                share = MGET(path,temps-1,j);
             }
             share*=quantity;
             MLET(path,temps,j) = share;
