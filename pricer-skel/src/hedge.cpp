@@ -116,15 +116,22 @@ int main(int argc, char** argv)
     // PnlVect* vect = pnl_vect_create(path->n);
     // pnl_mat_get_row(vect,path,1);
     // pnl_mat_set_row(past,vect,1);
+    double timeStepConsta = maturity / nbTimeSteps ;
+    double timeStepHedging = maturity / nbHedgingdates;
+    size_t nbTimeStepHedgDansTimeStepConsta = nbHedgingdates / nbTimeSteps;
     PnlVect* diffDeltas = pnl_vect_create(size);
     for (int i = 1; i <= nbHedgingdates; i++) {
-        double dateHedging = i*maturity/nbHedgingdates;
-        past = pnl_mat_create_from_scalar(nbTimeSteps+1,size,0.0);
-        pnl_mat_set_row(past,initSpots,0);
-        size_t temps = static_cast<size_t>(std::ceil(dateHedging*nbTimeSteps/maturity));
-        for (size_t j = 0; j < temps +1;j++){
-            vect = pnl_vect_create(size);
-            size_t tempsConstatH = j*nbHedgingdates/nbTimeSteps;
+        pnl_mat_get_row(vect, path, i);
+        double dateHedging = i*timeStepHedging;
+        //past = pnl_mat_create_from_scalar(nbTimeSteps+1,size,0.0);
+        //pnl_mat_set_row(past,initSpots,0);
+        size_t temps = static_cast<size_t>(std::ceil(dateHedging / timeStepConsta));
+        pnl_mat_set_row(past, vect, temps);
+        for (size_t j = 0; j < temps;j++){
+            //vect = pnl_vect_create(size);
+            pnl_mat_get_row(vect, path, j*nbTimeStepHedgDansTimeStepConsta);
+            pnl_mat_set_row(past, vect, j);
+            /*size_t tempsConstatH = j*nbHedgingdates/nbTimeSteps;
             if (i<tempsConstatH){
                 pnl_mat_get_row(vect,path,i);
                 pnl_mat_set_row(past,vect,j);
@@ -133,7 +140,7 @@ int main(int argc, char** argv)
                 pnl_mat_get_row(vect,path,tempsConstatH);
                 pnl_mat_set_row(past,vect,j);
             }
-            pnl_vect_free(&vect);
+            pnl_vect_free(&vect);*/
         }
         // PnlVect* vectDebug0 = pnl_vect_create(size);
         // pnl_mat_get_row(vectDebug0,past,0);
