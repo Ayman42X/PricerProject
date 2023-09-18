@@ -13,11 +13,12 @@ class BlackScholesModel
     PnlVect* sigma_; /// vecteur de volatilités
     PnlVect* spot_;  /// valeurs initiales des sous-jacents
     PnlVect* trend_;
+    PnlMat* matriceCorrelation;
     /**
      * Declaration de Constructeur
      */
     BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot);
-    
+    ~BlackScholesModel();
     /**
      * Génère une trajectoire du modèle et la stocke dans path
      *

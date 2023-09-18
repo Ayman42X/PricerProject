@@ -132,6 +132,10 @@ int main(int argc, char** argv)
         monteCarlo->deltaPrice(past,dateHedging, prix, stdPrix, delta, deltaStdDev);
         if (i%compt == 0){
             pnl_mat_resize(past,past->m +1,past->n);
+            // std::cout << "*************" << std::endl;
+            PnlVect* vectSet = pnl_vect_create_from_scalar(size,0.0);
+            pnl_mat_set_row(past,vectSet,past->m-1);
+            pnl_vect_free(&vectSet);
         }
         currentCashValue = CashValue*exp((r*maturity)/nbHedgingdates);
         pnl_mat_get_row(initSpots, path, i);
@@ -145,9 +149,10 @@ int main(int argc, char** argv)
         std::cout << "Option price :"<< prix << std::endl;
         std::cout << "Fin boucle" << std::endl;
         std::cout << "Itération :" << i << std::endl;
+        prix = 0.0;
     }
-    double payoff = option->payoff(path);
-    finalPnl = portfolio - option->payoff(path);
+    double payoff = option->payoff(past);
+    finalPnl = portfolio - option->payoff(past);
 
     HedgingResults hedge(initialPrice, initialPriceStdDev, finalPnl);;
     std::cout << hedge << std::endl;

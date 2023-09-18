@@ -9,6 +9,11 @@ BlackScholesModel::BlackScholesModel(int size, double r, double rho,PnlVect* sig
     this->sigma_ = sigma;
     this->spot_ = spot;
     this->iPlus1 = 0;
+    this->matriceCorrelation = pnl_mat_create_from_scalar(size,size,this->rho_);
+    for (int k = 0;k<size;k++){
+        pnl_mat_set(matriceCorrelation,k,k,1.0);
+    }
+    pnl_mat_chol(matriceCorrelation);
 }
 
 void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* rng){
@@ -17,19 +22,13 @@ void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* r
     pnl_mat_set_row(path,this->spot_,0);
     PnlVect* G = pnl_vect_new();
     PnlVect* L = pnl_vect_new();
-    PnlMat* matriceCorrelation = pnl_mat_create_from_scalar(d,d,this->rho_);
-    for (int k = 0;k<d;k++){
-        pnl_mat_set(matriceCorrelation,k,k,1.0);
-    }
-    //pnl_mat_print(matriceCorrelation);
-    pnl_mat_chol(matriceCorrelation);
     //pnl_mat_print(matriceCorrelation);
     for (int t=1;t<nbTimeSteps+1;t++){
         pnl_vect_rng_normal(G,d,rng);
         for (int j=0;j<d;j++){
             double sigmaShare = pnl_vect_get(this->sigma_,j);
             double quantity = (this->r_ - (sigmaShare*sigmaShare)/2)*timeStep;
-            pnl_mat_get_row(L,matriceCorrelation,j);
+            pnl_mat_get_row(L,this->matriceCorrelation,j);
             quantity += sigmaShare*sqrt(timeStep)*pnl_vect_scalar_prod(L,G);
             quantity = exp(quantity);
             double share = MGET(path,t-1,j);
@@ -39,7 +38,6 @@ void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* r
     }
     pnl_vect_free(&G);
     pnl_vect_free(&L);
-    pnl_mat_free(&matriceCorrelation);
 }
 
 
@@ -52,17 +50,12 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
     PnlVect* L = pnl_vect_new();
     pnl_mat_set_subblock(path,past,0,0);
     // Calcul de la matrice de correlation
-    PnlMat* matriceCorrelation = pnl_mat_create_from_scalar(d,d,this->rho_);
-    for (int k = 0;k<d;k++){
-        pnl_mat_set(matriceCorrelation,k,k,1.0);
-    }
-    pnl_mat_chol(matriceCorrelation);
-    double newStartingDate = std::abs((iPlus1)*timeStep - t);
+    double newStartingDate = (iPlus1+1)*timeStep - t;
     for (int temps=iPlus1;temps<nbTimeSteps+1;temps++){
         pnl_vect_rng_normal(G,d,rng);
         for (int j=0;j<d;j++){
             double sigmaShare = pnl_vect_get(this->sigma_,j);
-            pnl_mat_get_row(L,matriceCorrelation,j);
+            pnl_mat_get_row(L,this->matriceCorrelation,j);
             double quantity = 0.0;
             double share = 0.0;
             if (temps == iPlus1){
@@ -83,7 +76,6 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
     }
     pnl_vect_free(&G);
     pnl_vect_free(&L);
-    pnl_mat_free(&matriceCorrelation);
 }
 
 
@@ -102,12 +94,6 @@ void BlackScholesModel::simul_market(PnlMat* path, double T, int H, PnlRng* rng)
     pnl_mat_set_row(path,this->spot_,0);
     PnlVect* G = pnl_vect_new();
     PnlVect* L = pnl_vect_new();
-    PnlMat* matriceCorrelation = pnl_mat_create_from_scalar(d,d,this->rho_);
-    for (int k = 0;k<d;k++){
-        pnl_mat_set(matriceCorrelation,k,k,1.0);
-    }
-    //pnl_mat_print(matriceCorrelation);
-    pnl_mat_chol(matriceCorrelation);
     //pnl_mat_print(matriceCorrelation);
     for (int t=1;t<H+1;t++){
         pnl_vect_rng_normal(G,d,rng);
@@ -115,7 +101,7 @@ void BlackScholesModel::simul_market(PnlMat* path, double T, int H, PnlRng* rng)
             double sigmaShare = pnl_vect_get(this->sigma_,j);
             double trendShare = GET(this->trend_,j);
             double quantity = (trendShare- (sigmaShare*sigmaShare)/2)*timeStep;
-            pnl_mat_get_row(L,matriceCorrelation,j);
+            pnl_mat_get_row(L,this->matriceCorrelation,j);
             quantity += sigmaShare*sqrt(timeStep)*pnl_vect_scalar_prod(L,G);
             quantity = exp(quantity);
             double share = MGET(path,t-1,j);
@@ -150,4 +136,8 @@ size_t BlackScholesModel::handler_time(double t, double timeStep){
         return time;
     }
     return time;
+}
+
+BlackScholesModel::~BlackScholesModel(){
+    pnl_mat_free(&this->matriceCorrelation);
 }
