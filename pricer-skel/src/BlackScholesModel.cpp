@@ -57,7 +57,7 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
         pnl_mat_set(matriceCorrelation,k,k,1.0);
     }
     pnl_mat_chol(matriceCorrelation);
-    double newStartingDate = (iPlus1)*timeStep - t;
+    double newStartingDate = std::abs((iPlus1)*timeStep - t);
     for (int temps=iPlus1;temps<nbTimeSteps+1;temps++){
         pnl_vect_rng_normal(G,d,rng);
         for (int j=0;j<d;j++){
