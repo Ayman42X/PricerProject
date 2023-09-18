@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 
+
 int main(int argc, char** argv)
 {
     if (argc != 3) {
@@ -94,13 +95,16 @@ int main(int argc, char** argv)
     PnlVect* initDelta = pnl_vect_create(size);
     PnlVect* initDeltaStdDev = pnl_vect_create(size);
 
-    PnlVect* delta = pnl_vect_create(size);
+    PnlVect* delta = pnl_vect_create_from_scalar(size,0.0);
     PnlVect* deltaStdDev = pnl_vect_create(size);
     
     PnlMat* path = pnl_mat_create_from_file(argv[1]);
+    double x = 0.0;
+    
     
     // prix et delta à t = 0
     monteCarlo->deltaPrice(initialPrice, initialPriceStdDev, initDelta, initDeltaStdDev);
+    pnl_vect_print(initDelta);
     double prix = 0.0;
     double stdPrix = 0.0;
 
@@ -110,25 +114,25 @@ int main(int argc, char** argv)
     double portfolio = initialPrice;
     double CashValue = initialPrice - pnl_vect_scalar_prod(initDelta, initSpots);
     double currentCashValue = 0.0;
-    PnlMat* past = pnl_mat_create_from_scalar(nbTimeSteps+1,path->n,0.0);
+    PnlMat* past = pnl_mat_create_from_scalar(2,path->n,0.0);
     PnlVect* vect = pnl_vect_create(size);
     pnl_mat_set_row(past,initSpots,0);
+    int compt = nbHedgingdates/nbTimeSteps;
     double timeStepConsta = maturity / nbTimeSteps ;
     double timeStepHedging = maturity / nbHedgingdates;
     size_t nbTimeStepHedgDansTimeStepConsta = nbHedgingdates / nbTimeSteps;
     PnlVect* diffDeltas = pnl_vect_create(size);
     for (int i = 1; i <= nbHedgingdates; i++) {
         //pnl_mat_print(past);
-        pnl_mat_get_row(vect, path, i);
-        double dateHedging = i*timeStepHedging;
-        size_t temps = static_cast<size_t>(std::ceil(dateHedging / timeStepConsta));
-        pnl_mat_set_row(past, vect, temps);
-        for (size_t j = 0; j < temps;j++){
-            pnl_mat_get_row(vect, path, j*nbTimeStepHedgDansTimeStepConsta);
-            pnl_mat_set_row(past, vect, j);
-        }
-        //pnl_mat_print(past);
+        PnlVect* vectPrices = pnl_vect_create(size);
+        pnl_mat_get_row(vectPrices,path,i);
+        pnl_mat_set_row(past,vectPrices,past->m - 1);
+        double dateHedging = i *timeStepHedging;
+        delta = pnl_vect_create_from_scalar(size,0.0);
         monteCarlo->deltaPrice(past,dateHedging, prix, stdPrix, delta, deltaStdDev);
+        if (i%compt == 0){
+            pnl_mat_resize(past,past->m +1,past->n);
+        }
         currentCashValue = CashValue*exp((r*maturity)/nbHedgingdates);
         pnl_mat_get_row(initSpots, path, i);
         pnl_vect_print(initSpots);
@@ -140,6 +144,7 @@ int main(int argc, char** argv)
         std::cout << "Portfolio value :" << portfolio << std::endl;
         std::cout << "Option price :"<< prix << std::endl;
         std::cout << "Fin boucle" << std::endl;
+        std::cout << "Itération :" << i << std::endl;
     }
     double payoff = option->payoff(path);
     finalPnl = portfolio - option->payoff(path);

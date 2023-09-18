@@ -25,9 +25,6 @@ public:
         double weightedSum = 0.0;
         for (int d = 0; d < size_; ++d)
         {
-            //PnlVect* testVect = pnl_vect_create(d);
-            // pnl_mat_get_row(testVect, path,path->m - 1);
-            // pnl_vect_print(testVect);
             weightedSum += pnl_vect_get(weights_, d) * pnl_mat_get(path, path->m - 1, d);
         }
 

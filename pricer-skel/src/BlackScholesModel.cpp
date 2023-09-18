@@ -8,6 +8,7 @@ BlackScholesModel::BlackScholesModel(int size, double r, double rho,PnlVect* sig
     this->rho_ = rho;
     this->sigma_ = sigma;
     this->spot_ = spot;
+    this->iPlus1 = 0;
 }
 
 void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* rng){
@@ -45,7 +46,8 @@ void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* r
 void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps, PnlRng* rng, const PnlMat* past){
    double timeStep = T/nbTimeSteps;
     int d = this->spot_->size;
-    int iPlus1 = static_cast<int>(std::ceil(t/timeStep));
+    size_t iPlus1 = past->m -1;
+    this->iPlus1 = past->m - 1;
     PnlVect* G = pnl_vect_new();
     PnlVect* L = pnl_vect_new();
     pnl_mat_set_subblock(path,past,0,0);
@@ -86,11 +88,13 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
 
 
 void BlackScholesModel::shiftAsset(PnlMat* shift_path, const PnlMat* path, int d, double h, double t, double timestep){
-    size_t timeTRowIndex = static_cast<size_t>(std::ceil(t / timestep));
+    size_t timeTRowIndex = this->iPlus1;
     for (size_t i = timeTRowIndex; i < path->m; i++){
         MLET(shift_path, i, d) = MGET(shift_path, i, d) * (1 + h);
     }
 }
+
+
 
 void BlackScholesModel::simul_market(PnlMat* path, double T, int H, PnlRng* rng){
     double timeStep = T/H;
@@ -122,4 +126,28 @@ void BlackScholesModel::simul_market(PnlMat* path, double T, int H, PnlRng* rng)
     pnl_vect_free(&G);
     pnl_vect_free(&L);
     pnl_mat_free(&matriceCorrelation);
+}
+
+size_t BlackScholesModel::handler_time(double t, double timeStep){
+    double a = t/timeStep;
+    size_t time = static_cast<size_t>(std::ceil(a));
+    double precision = 1e-8;
+    if (time - (a) < 0){
+        return time +1;
+    }
+    if (time - (t/timeStep) > 0){
+        if (time - a > precision){
+            if (time -a > (timeStep/3) - precision){
+                return time;
+            }
+            else{
+               return time -1;
+            }
+
+        }
+    }
+    if (time == t/timeStep){
+        return time;
+    }
+    return time;
 }

@@ -2,7 +2,7 @@
 #include "pnl/pnl_vector.h"
 #include "pnl/pnl_matrix.h"
 #include <cmath>
-
+#include <iostream>
 MonteCarlo::MonteCarlo(BlackScholesModel* mod, Option* opt, PnlRng* rng, double fdStep, long nbSamples)
         : mod_(mod), opt_(opt), rng_(rng), fdStep_(fdStep), nbSamples_(nbSamples) 
 {
@@ -45,7 +45,7 @@ void MonteCarlo::deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* 
 void MonteCarlo::deltaPrice(const PnlMat* past, double t, double& prix, double& std, PnlVect* delta, PnlVect* std_dev){
     PnlMat* path = pnl_mat_create(opt_->nbTimeSteps_ +1, opt_->size_);
     double timeStep = opt_->T_ / opt_->nbTimeSteps_;
-    size_t iPlus1 = static_cast<size_t>(std::ceil(t/timeStep));
+    size_t iPlus1 = past->m - 1;
     PnlVect* s_t = pnl_vect_create(opt_->size_);
     pnl_mat_get_row(s_t,past,iPlus1);
     double var_price = 0;
@@ -78,4 +78,24 @@ void MonteCarlo::deltaPrice(const PnlMat* past, double t, double& prix, double& 
     }
     pnl_mat_free(&path);
     pnl_vect_free(&s_t);
+}
+
+size_t MonteCarlo::handler_time(double t, double timeStep){
+    size_t time = static_cast<size_t>(std::ceil(t/timeStep));
+    double precision = 1e-8;
+    if (time - (t/timeStep) < 0){
+        return time +1;
+    }
+    if (time - (t/timeStep) > 0){
+        if (time - (t/timeStep) > precision){
+            return time -1;
+        }
+        else{
+            return t/timeStep;
+        }
+    }
+    if (time == t/timeStep){
+        return time;
+    }
+    return time;
 }

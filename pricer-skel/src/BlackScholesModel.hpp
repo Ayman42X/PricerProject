@@ -8,7 +8,8 @@ class BlackScholesModel
   public:
     int size_;       /// nombre d'actifs du modèle
     double r_;       /// taux d'intérêt
-    double rho_;     /// paramètre de corrélation
+    double rho_; 
+    int iPlus1;    /// paramètre de corrélation
     PnlVect* sigma_; /// vecteur de volatilités
     PnlVect* spot_;  /// valeurs initiales des sous-jacents
     PnlVect* trend_;
@@ -55,4 +56,5 @@ class BlackScholesModel
      */
     void shiftAsset(PnlMat* shift_path, const PnlMat* path, int d, double h, double t, double timestep);
     void simul_market(PnlMat* path, double T, int H, PnlRng* rng);
+    size_t handler_time(double t,double timeStep);
 };

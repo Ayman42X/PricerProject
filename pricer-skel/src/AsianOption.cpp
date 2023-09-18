@@ -2,6 +2,8 @@
 #include "pnl/pnl_matrix.h"
 #include "Option.hpp"
 #include <algorithm>
+#include <cmath>
+#include <iostream>
 
 class AsianOption : public Option
 {
@@ -19,12 +21,13 @@ public:
     double payoff(const PnlMat* path) override
     { 
         PnlVect* average_prices = pnl_vect_create_from_scalar(size_, 0.0);
-        size_t pas = (path->m -1)/nbTimeSteps_;
         for (int j = 0; j < size_; j++)
         {
             double weighted_sum = 0.0;
-            for (int i = 0; i < path->m; i+=pas)
+            double x = 0.0;
+            for (int i = 0; i < nbTimeSteps_+1; i++)
             {
+                x = MGET(path,i,j);
                 weighted_sum += MGET(path, i, j);
             }
             LET(average_prices, j) = (GET(weights_, j) *weighted_sum) / (nbTimeSteps_ + 1);

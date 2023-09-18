@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     PnlVect* deltaStdDev = pnl_vect_create(size);
 
     monteCarlo->deltaPrice(price, priceStdDev, delta, deltaStdDev);
-
+    pnl_vect_print(delta);
     PricingResults res(price, priceStdDev, delta, deltaStdDev);
     std::cout << res << std::endl;
 
