@@ -9,8 +9,7 @@ class BlackScholesModel
     int size_;       /// nombre d'actifs du modèle
     double r_;       /// taux d'intérêt
     double rho_; 
-    int iPlus1;
-    int flag;    /// paramètre de corrélation
+    int iPlus1;   /// paramètre de corrélation
     PnlVect* sigma_; /// vecteur de volatilités
     PnlVect* spot_;  /// valeurs initiales des sous-jacents
     PnlVect* trend_;
