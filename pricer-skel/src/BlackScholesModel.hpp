@@ -9,7 +9,8 @@ class BlackScholesModel
     int size_;       /// nombre d'actifs du modèle
     double r_;       /// taux d'intérêt
     double rho_; 
-    int iPlus1;    /// paramètre de corrélation
+    int iPlus1;
+    int flag;    /// paramètre de corrélation
     PnlVect* sigma_; /// vecteur de volatilités
     PnlVect* spot_;  /// valeurs initiales des sous-jacents
     PnlVect* trend_;
@@ -17,7 +18,7 @@ class BlackScholesModel
     /**
      * Declaration de Constructeur
      */
-    BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot);
+    BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot,int flag);
     ~BlackScholesModel();
     /**
      * Génère une trajectoire du modèle et la stocke dans path

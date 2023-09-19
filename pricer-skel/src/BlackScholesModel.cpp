@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iostream>
 
-BlackScholesModel::BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot){
+BlackScholesModel::BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot,int flag){
     this->size_ = size;
     this->r_ = r;
     this->rho_ = rho;
@@ -14,6 +14,7 @@ BlackScholesModel::BlackScholesModel(int size, double r, double rho,PnlVect* sig
         pnl_mat_set(matriceCorrelation,k,k,1.0);
     }
     pnl_mat_chol(matriceCorrelation);
+    this->flag = flag;
 }
 
 void BlackScholesModel::asset(PnlMat* path, double T, int nbTimeSteps, PnlRng* rng){
@@ -50,7 +51,13 @@ void BlackScholesModel::asset(PnlMat* path, double t, double T, int nbTimeSteps,
     PnlVect* L = pnl_vect_new();
     pnl_mat_set_subblock(path,past,0,0);
     // Calcul de la matrice de correlation
-    double newStartingDate = (iPlus1+1)*timeStep - t;
+    double newStartingDate;
+    if (this->flag == 0){
+        newStartingDate =(iPlus1+1)*timeStep - t;
+    }
+    else{
+        newStartingDate = std::abs(iPlus1*timeStep - t);
+    }
     for (int temps=iPlus1;temps<nbTimeSteps+1;temps++){
         pnl_vect_rng_normal(G,d,rng);
         for (int j=0;j<d;j++){

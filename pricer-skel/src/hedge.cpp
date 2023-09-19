@@ -72,18 +72,21 @@ int main(int argc, char** argv)
     PnlRng* rng = pnl_rng_create(PNL_RNG_MERSENNE);
     pnl_rng_sseed(rng, time(NULL));
 
-    BlackScholesModel* blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots);
+    BlackScholesModel* blackScholesModel;
 
     Option* option = nullptr;
 
     if (option_type == "basket") {
         j.at("strike").get_to(strike);
         option = new BasketOption(maturity, nbTimeSteps, size, strike, weights);
+        blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots,1);
     } else if (option_type == "performance") {
         option = new PerformanceOption(maturity, nbTimeSteps, size, weights);
+        blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots,0);
     } else if (option_type == "asian") {
         j.at("strike").get_to(strike);
         option = new AsianOption(maturity, nbTimeSteps, size, strike, weights);
+        blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots,0);
     }
 
     MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, option, rng, fdStep, nbSamples);
@@ -123,14 +126,13 @@ int main(int argc, char** argv)
     size_t nbTimeStepHedgDansTimeStepConsta = nbHedgingdates / nbTimeSteps;
     PnlVect* diffDeltas = pnl_vect_create(size);
     for (int i = 1; i <= nbHedgingdates; i++) {
-        //pnl_mat_print(past);
         PnlVect* vectPrices = pnl_vect_create(size);
         pnl_mat_get_row(vectPrices,path,i);
         pnl_mat_set_row(past,vectPrices,past->m - 1);
         double dateHedging = i *timeStepHedging;
         delta = pnl_vect_create_from_scalar(size,0.0);
         monteCarlo->deltaPrice(past,dateHedging, prix, stdPrix, delta, deltaStdDev);
-        if (i%compt == 0){
+        if (i%compt == 0 && i!=nbHedgingdates){
             pnl_mat_resize(past,past->m +1,past->n);
             // std::cout << "*************" << std::endl;
             PnlVect* vectSet = pnl_vect_create_from_scalar(size,0.0);
