@@ -18,7 +18,7 @@ class BlackScholesModel
     /**
      * Declaration de Constructeur
      */
-    BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot,int flag);
+    BlackScholesModel(int size, double r, double rho,PnlVect* sigma,PnlVect* spot);
     ~BlackScholesModel();
     /**
      * Génère une trajectoire du modèle et la stocke dans path
@@ -58,5 +58,4 @@ class BlackScholesModel
      */
     void shiftAsset(PnlMat* shift_path, const PnlMat* path, int d, double h, double t, double timestep);
     void simul_market(PnlMat* path, double T, int H, PnlRng* rng);
-    size_t handler_time(double t,double timeStep);
 };

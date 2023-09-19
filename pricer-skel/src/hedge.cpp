@@ -72,21 +72,18 @@ int main(int argc, char** argv)
     PnlRng* rng = pnl_rng_create(PNL_RNG_MERSENNE);
     pnl_rng_sseed(rng, time(NULL));
 
-    BlackScholesModel* blackScholesModel;
+    BlackScholesModel* blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots);;
 
     Option* option = nullptr;
 
     if (option_type == "basket") {
         j.at("strike").get_to(strike);
         option = new BasketOption(maturity, nbTimeSteps, size, strike, weights);
-        blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots,1);
     } else if (option_type == "performance") {
         option = new PerformanceOption(maturity, nbTimeSteps, size, weights);
-        blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots,0);
     } else if (option_type == "asian") {
         j.at("strike").get_to(strike);
         option = new AsianOption(maturity, nbTimeSteps, size, strike, weights);
-        blackScholesModel = new BlackScholesModel(size, r, correlation, volatility, spots,0);
     }
 
     MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, option, rng, fdStep, nbSamples);

@@ -18,7 +18,7 @@ int main() {
     PnlVect* weights = pnl_vect_create_from_scalar(2,0.5);
 
     pnl_rng_sseed(rng, time(NULL));
-    BlackScholesModel* blackScholesModel = new BlackScholesModel(2,0.02,0.0,sigma,spot,0);
+    BlackScholesModel* blackScholesModel = new BlackScholesModel(2,0.02,0.0,sigma,spot);
 // Option Asiatique
     AsianOption* OptionTest = new AsianOption(1.5,150,2,100,weights);
     MonteCarlo* monteCarlo = new MonteCarlo(blackScholesModel, OptionTest,rng, 0.1,50000);

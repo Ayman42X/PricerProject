@@ -79,23 +79,3 @@ void MonteCarlo::deltaPrice(const PnlMat* past, double t, double& prix, double& 
     pnl_mat_free(&path);
     pnl_vect_free(&s_t);
 }
-
-size_t MonteCarlo::handler_time(double t, double timeStep){
-    size_t time = static_cast<size_t>(std::ceil(t/timeStep));
-    double precision = 1e-8;
-    if (time - (t/timeStep) < 0){
-        return time +1;
-    }
-    if (time - (t/timeStep) > 0){
-        if (time - (t/timeStep) > precision){
-            return time -1;
-        }
-        else{
-            return t/timeStep;
-        }
-    }
-    if (time == t/timeStep){
-        return time;
-    }
-    return time;
-}
