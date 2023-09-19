@@ -99,12 +99,12 @@ int main(int argc, char** argv)
     PnlVect* deltaStdDev = pnl_vect_create(size);
     
     PnlMat* path = pnl_mat_create_from_file(argv[1]);
+    PnlMat* deltaPath = pnl_mat_create(nbTimeSteps+1,size);
     double x = 0.0;
     
     
     // prix et delta à t = 0
     monteCarlo->deltaPrice(initialPrice, initialPriceStdDev, initDelta, initDeltaStdDev);
-    pnl_vect_print(initDelta);
     double prix = 0.0;
     double stdPrix = 0.0;
 
@@ -128,27 +128,21 @@ int main(int argc, char** argv)
         pnl_mat_set_row(past,vectPrices,past->m - 1);
         double dateHedging = i *timeStepHedging;
         delta = pnl_vect_create_from_scalar(size,0.0);
-        monteCarlo->deltaPrice(past,dateHedging, prix, stdPrix, delta, deltaStdDev);
+        monteCarlo->deltaPrice(deltaPath,past,dateHedging, prix, stdPrix, delta, deltaStdDev);
         if (i%compt == 0 && i!=nbHedgingdates){
             pnl_mat_resize(past,past->m +1,past->n);
-            // std::cout << "*************" << std::endl;
             PnlVect* vectSet = pnl_vect_create_from_scalar(size,0.0);
             pnl_mat_set_row(past,vectSet,past->m-1);
             pnl_vect_free(&vectSet);
         }
         currentCashValue = CashValue*exp((r*maturity)/nbHedgingdates);
         pnl_mat_get_row(initSpots, path, i);
-        pnl_vect_print(initSpots);
-        pnl_vect_print(delta);
         portfolio = currentCashValue + pnl_vect_scalar_prod(initDelta,initSpots);
         currentCashValue = portfolio - pnl_vect_scalar_prod(delta,initSpots) ;       
         CashValue = currentCashValue;
         initDelta = delta;
-        std::cout << "Portfolio value :" << portfolio << std::endl;
-        std::cout << "Option price :"<< prix << std::endl;
-        std::cout << "Fin boucle" << std::endl;
-        std::cout << "Itération :" << i << std::endl;
         prix = 0.0;
+        // std::cout << "Indice :" << i << std::endl;
     }
     double payoff = option->payoff(past);
     finalPnl = portfolio - option->payoff(past);
@@ -159,11 +153,12 @@ int main(int argc, char** argv)
 
     pnl_vect_free(&initDelta);
     pnl_vect_free(&initDeltaStdDev);
-    pnl_vect_free(&delta);
+    //pnl_vect_free(&delta);
     pnl_vect_free(&deltaStdDev);
     pnl_vect_free(&spots);
     pnl_vect_free(&weights);
     pnl_vect_free(&volatility);
+    pnl_mat_free(&deltaPath);
     pnl_rng_free(&rng);
     exit(0);
 }

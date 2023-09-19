@@ -21,5 +21,5 @@ class MonteCarlo
 
     void deltaPrice(double& prix, double& std, PnlVect* delta, PnlVect* std_dev);
     
-    void deltaPrice(const PnlMat* past, double t, double& prix, double& std, PnlVect* delta, PnlVect* std_dev);
+    void deltaPrice(PnlMat* path, const PnlMat* past, double t, double& prix, double& std, PnlVect* delta, PnlVect* std_dev);
 };
